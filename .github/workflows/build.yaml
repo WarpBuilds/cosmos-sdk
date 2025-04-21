@@ -22,7 +22,7 @@ jobs:
     runs-on: ${{ matrix.go-arch == 'amd64' && 'warp-ubuntu-2204-x64-4x' || 'warp-ubuntu-2204-arm64-4x' }}
     steps:
       - uses: actions/checkout@v4
-      - uses: actions/setup-go@v5
+      - uses: WarpBuilds/setup-go@v5
         with:
           go-version: "1.23"
           check-latest: true
