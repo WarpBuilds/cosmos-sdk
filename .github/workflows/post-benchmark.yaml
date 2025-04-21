@@ -2,7 +2,7 @@ name: Post Benchmark Data
 
 on:
   workflow_run:
-    workflows: ["basebuild"]
+    workflows: ["build"]
     types:
       - completed
     branches:
