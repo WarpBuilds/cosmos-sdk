@@ -2,12 +2,11 @@ name: Post Benchmark Data
 
 on:
   workflow_run:
-    workflows: ["Build SimApp"]
+    workflows: ["build"]
     types:
       - completed
     branches:
-      - master
-      - develop
+      - main
 
 jobs:
   fetch-timings:
