@@ -65,51 +65,26 @@ jobs:
 
             # Get just the commit message from upstream
             UPSTREAM_COMMIT_MSG=$(git log -1 --pretty=format:"%s" upstream/$branch_name)
-            echo "Latest upstream commit: $UPSTREAM_COMMIT_MSG"
 
             # Check if we need to merge (are we behind upstream?)
             if git merge-base --is-ancestor HEAD upstream/$branch_name; then
               echo "Already up to date with upstream/$branch_name"
             else
-              # Debug - Check git version and environment
-              echo "DEBUG: Git version"
-              git --version
-              echo "DEBUG: Current working directory"
-              pwd
-              echo "DEBUG: Available branches"
-              git branch -a
-              echo "DEBUG: Current git status"
-              git status
-
-              echo "DEBUG: Checking for upstream branch"
-              git branch -r | grep upstream
-
-              # Create merge directory
-              mkdir -p /tmp/merge-work
-
-              # More detailed debugging around the diff command
-              echo "DEBUG: Running git diff to find changed files..."
-
               # Check if the upstream branch exists
               if git rev-parse --verify upstream/$branch_name >/dev/null 2>&1; then
-                echo "DEBUG: upstream/$branch_name exists, proceeding with diff"
-
-                # First just get raw diff output
-                echo "DEBUG: Raw diff output:"
-                git diff --name-only HEAD upstream/$branch_name || echo "Diff command failed with status $?"
-
-                # Now get the actual changes for our variable
-                echo "DEBUG: Getting filtered changes list..."
+                # Get list of changes from upstream, excluding workflow files
                 UPSTREAM_CHANGES=$(git diff --name-only HEAD upstream/$branch_name 2>/dev/null | grep -v "^.github/workflows/" || echo "")
 
-                echo "DEBUG: Diff operation completed"
                 echo "Files to be updated from upstream:"
                 echo "$UPSTREAM_CHANGES"
 
                 if [ -z "$UPSTREAM_CHANGES" ]; then
-                  echo "No changes to apply (or error getting changes)"
+                  echo "No changes to apply (or only workflow changes)"
                   return 0
                 fi
+
+                # Create a temporary directory for processing files
+                mkdir -p /tmp/merge-work
 
                 # Process each changed file
                 echo "Processing changed files..."
