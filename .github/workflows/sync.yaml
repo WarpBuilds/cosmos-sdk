@@ -65,6 +65,7 @@ jobs:
 
             # Get just the commit message from upstream
             UPSTREAM_COMMIT_MSG=$(git log -1 --pretty=format:"%s" upstream/$branch_name)
+            echo "Latest upstream commit: $UPSTREAM_COMMIT_MSG"
 
             # Check if we need to merge (are we behind upstream?)
             if git merge-base --is-ancestor HEAD upstream/$branch_name; then
@@ -75,40 +76,65 @@ jobs:
               git --version
               echo "DEBUG: Current working directory"
               pwd
-              echo "DEBUG: Directory permissions"
-              ls -la
-              echo "DEBUG: Temp directory permissions"
-              ls -la /tmp
-              echo "DEBUG: Creating and checking /tmp/merge-work directory"
+              echo "DEBUG: Available branches"
+              git branch -a
+              echo "DEBUG: Current git status"
+              git status
+
+              echo "DEBUG: Checking for upstream branch"
+              git branch -r | grep upstream
+
+              # Create merge directory
               mkdir -p /tmp/merge-work
-              ls -la /tmp/merge-work
 
-              # Try alternative approach first - just create a temp directory and copy files manually
-              echo "Using manual file copying approach..."
+              # More detailed debugging around the diff command
+              echo "DEBUG: Running git diff to find changed files..."
 
-              # Get list of changes from upstream, excluding workflow files
-              UPSTREAM_CHANGES=$(git diff --name-only HEAD upstream/$branch_name | grep -v "^.github/workflows/")
-              echo "Files to be updated from upstream:"
-              echo "$UPSTREAM_CHANGES"
+              # Check if the upstream branch exists
+              if git rev-parse --verify upstream/$branch_name >/dev/null 2>&1; then
+                echo "DEBUG: upstream/$branch_name exists, proceeding with diff"
 
-              # Process each changed file
-              for FILE in $UPSTREAM_CHANGES; do
-                echo "Processing: $FILE"
-                # Create directory structure if needed
-                mkdir -p "/tmp/merge-work/$(dirname "$FILE")"
-                # Copy the file from upstream
-                git show "upstream/$branch_name:$FILE" > "/tmp/merge-work/$FILE" || echo "Failed to copy: $FILE"
-              done
+                # First just get raw diff output
+                echo "DEBUG: Raw diff output:"
+                git diff --name-only HEAD upstream/$branch_name || echo "Diff command failed with status $?"
 
-              # Copy the changes back to our repository
-              echo "Copying changes back to repository..."
-              cp -r /tmp/merge-work/* ./
+                # Now get the actual changes for our variable
+                echo "DEBUG: Getting filtered changes list..."
+                UPSTREAM_CHANGES=$(git diff --name-only HEAD upstream/$branch_name 2>/dev/null | grep -v "^.github/workflows/" || echo "")
 
-              # Add all changes
-              git add .
+                echo "DEBUG: Diff operation completed"
+                echo "Files to be updated from upstream:"
+                echo "$UPSTREAM_CHANGES"
 
-              # Commit with the upstream commit message
-              git commit -m "$UPSTREAM_COMMIT_MSG" || echo "No changes to commit"
+                if [ -z "$UPSTREAM_CHANGES" ]; then
+                  echo "No changes to apply (or error getting changes)"
+                  return 0
+                fi
+
+                # Process each changed file
+                echo "Processing changed files..."
+                for FILE in $UPSTREAM_CHANGES; do
+                  echo "Processing: $FILE"
+                  # Create directory structure if needed
+                  mkdir -p "/tmp/merge-work/$(dirname "$FILE")"
+                  # Copy the file from upstream
+                  git show "upstream/$branch_name:$FILE" > "/tmp/merge-work/$FILE" || echo "Failed to copy: $FILE"
+                done
+
+                # Copy the changes back to our repository
+                echo "Copying changes back to repository..."
+                cp -r /tmp/merge-work/* ./
+
+                # Add all changes
+                git add .
+
+                # Commit with the upstream commit message
+                git commit -m "$UPSTREAM_COMMIT_MSG" || echo "No changes to commit"
+              else
+                echo "ERROR: upstream/$branch_name does not exist!"
+                git remote -v
+                return 1
+              fi
             fi
 
             # Push changes to origin
