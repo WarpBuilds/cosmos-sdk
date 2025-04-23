@@ -63,12 +63,6 @@ jobs:
             local branch_name=$1
             echo "Syncing branch: $branch_name"
 
-            # Save any workflow files we might have modified
-            mkdir -p /tmp/workflow-backup
-            if [ -d ".github/workflows" ]; then
-              cp -r .github/workflows/* /tmp/workflow-backup/ || true
-            fi
-
             # Get just the commit message from upstream
             UPSTREAM_COMMIT_MSG=$(git log -1 --pretty=format:"%s" upstream/$branch_name)
 
@@ -76,30 +70,31 @@ jobs:
             if git merge-base --is-ancestor HEAD upstream/$branch_name; then
               echo "Already up to date with upstream/$branch_name"
             else
-              # We're behind upstream, proceed with merge
-              # Try standard merge first with the upstream commit message
-              if git merge upstream/$branch_name -m "$UPSTREAM_COMMIT_MSG"; then
-                echo "Standard merge successful"
-              else
-                # If standard merge fails, abort it
-                git merge --abort
+              # Create a temporary index file for the merge to exclude workflow files
+              echo "Creating temporary index to exclude .github/workflows..."
+              git checkout-index -a -f --prefix=/tmp/merge-work/
 
-                # Try again with strategy to prefer upstream changes
-                echo "Standard merge failed. Using 'theirs' strategy to resolve conflicts automatically."
-                git merge -X theirs upstream/$branch_name -m "$UPSTREAM_COMMIT_MSG"
-              fi
-            fi
+              # Get list of changes from upstream, excluding workflow files
+              UPSTREAM_CHANGES=$(git diff --name-only HEAD upstream/$branch_name | grep -v "^.github/workflows/")
 
-            # Restore our workflow files regardless of merge strategy
-            if [ -d "/tmp/workflow-backup" ] && [ -n "$(ls -A /tmp/workflow-backup)" ]; then
-              mkdir -p .github/workflows
-              cp -r /tmp/workflow-backup/* .github/workflows/
-              git add .github/workflows/
-              if git diff --staged --quiet; then
-                echo "No changes to workflow files"
-              else
-                git commit -m "Preserve custom workflow files after sync"
-              fi
+              # Apply those changes from upstream to our temp directory
+              echo "Applying upstream changes except for workflow files..."
+              for FILE in $UPSTREAM_CHANGES; do
+                # Create directory structure if needed
+                mkdir -p /tmp/merge-work/$(dirname "$FILE")
+                # Copy the file from upstream
+                git show upstream/$branch_name:"$FILE" > /tmp/merge-work/"$FILE" || true
+              done
+
+              # Copy the changes back to our repository
+              echo "Copying changes back to repository..."
+              cp -r /tmp/merge-work/* ./
+
+              # Add all changes
+              git add .
+
+              # Commit with the upstream commit message
+              git commit -m "$UPSTREAM_COMMIT_MSG" || echo "No changes to commit"
             fi
 
             # Push changes to origin
