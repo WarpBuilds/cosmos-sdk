@@ -70,20 +70,34 @@ jobs:
             if git merge-base --is-ancestor HEAD upstream/$branch_name; then
               echo "Already up to date with upstream/$branch_name"
             else
-              # Create a temporary index file for the merge to exclude workflow files
-              echo "Creating temporary index to exclude .github/workflows..."
-              git checkout-index -a -f --prefix=/tmp/merge-work/
+              # Debug - Check git version and environment
+              echo "DEBUG: Git version"
+              git --version
+              echo "DEBUG: Current working directory"
+              pwd
+              echo "DEBUG: Directory permissions"
+              ls -la
+              echo "DEBUG: Temp directory permissions"
+              ls -la /tmp
+              echo "DEBUG: Creating and checking /tmp/merge-work directory"
+              mkdir -p /tmp/merge-work
+              ls -la /tmp/merge-work
+
+              # Try alternative approach first - just create a temp directory and copy files manually
+              echo "Using manual file copying approach..."
 
               # Get list of changes from upstream, excluding workflow files
               UPSTREAM_CHANGES=$(git diff --name-only HEAD upstream/$branch_name | grep -v "^.github/workflows/")
+              echo "Files to be updated from upstream:"
+              echo "$UPSTREAM_CHANGES"
 
-              # Apply those changes from upstream to our temp directory
-              echo "Applying upstream changes except for workflow files..."
+              # Process each changed file
               for FILE in $UPSTREAM_CHANGES; do
+                echo "Processing: $FILE"
                 # Create directory structure if needed
-                mkdir -p /tmp/merge-work/$(dirname "$FILE")
+                mkdir -p "/tmp/merge-work/$(dirname "$FILE")"
                 # Copy the file from upstream
-                git show upstream/$branch_name:"$FILE" > /tmp/merge-work/"$FILE" || true
+                git show "upstream/$branch_name:$FILE" > "/tmp/merge-work/$FILE" || echo "Failed to copy: $FILE"
               done
 
               # Copy the changes back to our repository
