@@ -1,4 +1,4 @@
-name: build
+name: Build SimApp
 on:
   pull_request:
   merge_group:
@@ -15,7 +15,6 @@ concurrency:
 
 jobs:
   build:
-    name: Build on WarpBuild's ${{ matrix.go-arch }} Runner
     strategy:
       matrix:
         go-arch: ["amd64", "arm64"] # drop 32 bit support for now (and maybe forever)
