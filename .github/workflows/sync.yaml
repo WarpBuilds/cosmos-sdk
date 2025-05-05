@@ -113,3 +113,14 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ steps.app-token.outputs.token }}
           GH_TOKEN: ${{ steps.app-token.outputs.token }}
+
+  on-failure:
+    runs-on: warp-ubuntu-latest-x64-4x
+    needs: sync
+    if: ${{ always() && (needs.sync.outcome == 'failure') }}
+    steps:
+      - uses: ravsamhq/notify-slack-action@v2
+        with:
+          status: ${{ job.status }}
+        env:
+          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
