@@ -117,7 +117,7 @@ jobs:
   on-failure:
     runs-on: warp-ubuntu-latest-x64-4x
     needs: sync
-    if: ${{ always() && (needs.sync.outcome == 'failure') }}
+    if: ${{ always() && needs.sync.result != 'success' }}
     steps:
       - uses: ravsamhq/notify-slack-action@v2
         with:
