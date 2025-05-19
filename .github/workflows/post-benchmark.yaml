@@ -42,10 +42,7 @@ jobs:
               const duration = Math.round((end - start) / 1000); // duration in seconds
 
               // Determine runner type from job name
-              let jobProvider = 'github';
-              if (job.name.includes('Build on WarpBuild Runner')) {
-                jobProvider = 'warpbuild';
-              }
+              let jobProvider = 'warpbuild';
 
               // Determine architecture - can be extended if needed
               const arch = ["amd64", "arm64"];
