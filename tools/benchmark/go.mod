@@ -4,7 +4,7 @@ go 1.23.5
 
 require (
 	cosmossdk.io/api v1.0.0-alpha.0
-	cosmossdk.io/core v1.1.0-alpha.0
+	cosmossdk.io/core v1.1.0-alpha.1
 	cosmossdk.io/depinject v1.2.1
 	cosmossdk.io/log v1.6.0
 	github.com/cespare/xxhash/v2 v2.3.0
@@ -19,7 +19,7 @@ require (
 require (
 	buf.build/gen/go/cometbft/cometbft/protocolbuffers/go v1.36.6-20241120201313-68e42a58b301.1 // indirect
 	buf.build/gen/go/cosmos/gogo-proto/protocolbuffers/go v1.36.6-20240130113600-88ef6483f90f.1 // indirect
-	cosmossdk.io/collections v1.2.1 // indirect
+	cosmossdk.io/collections v1.3.0 // indirect
 	cosmossdk.io/errors v1.0.2 // indirect
 	cosmossdk.io/math v1.5.3 // indirect
 	cosmossdk.io/schema v1.1.0 // indirect

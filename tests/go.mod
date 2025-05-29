@@ -4,7 +4,7 @@ go 1.23.5
 
 require (
 	cosmossdk.io/api v1.0.0-alpha.0
-	cosmossdk.io/core v1.1.0-alpha.0
+	cosmossdk.io/core v1.1.0-alpha.1
 	cosmossdk.io/depinject v1.2.1
 	cosmossdk.io/errors v1.0.2
 	cosmossdk.io/log v1.6.0
@@ -42,7 +42,7 @@ require (
 	cloud.google.com/go/monitoring v1.21.2 // indirect
 	cloud.google.com/go/storage v1.49.0 // indirect
 	cosmossdk.io/client/v2 v2.0.0-beta.9 // indirect
-	cosmossdk.io/collections v1.2.1 // indirect
+	cosmossdk.io/collections v1.3.0 // indirect
 	cosmossdk.io/schema v1.1.0 // indirect
 	filippo.io/edwards25519 v1.1.0 // indirect
 	github.com/99designs/go-keychain v0.0.0-20191008050251-8e49817e8af4 // indirect
@@ -220,11 +220,7 @@ require (
 // )
 
 // Replace all unreleased direct deps upgraded to comet v1
-replace (
-	cosmossdk.io/collections => ../collections
-	cosmossdk.io/core => ../core
-	cosmossdk.io/store => ../store
-)
+replace cosmossdk.io/store => ../store
 
 // Below are the long-lived replace for tests.
 replace (
