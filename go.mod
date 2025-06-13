@@ -3,9 +3,9 @@ go 1.23.5
 module github.com/cosmos/cosmos-sdk
 
 require (
-	cosmossdk.io/api v1.0.0-alpha.1
+	cosmossdk.io/api v1.0.0-rc.1
 	cosmossdk.io/collections v1.3.1
-	cosmossdk.io/core v1.1.0-alpha.2
+	cosmossdk.io/core v1.1.0-rc.1
 	cosmossdk.io/depinject v1.2.1
 	cosmossdk.io/errors v1.0.2
 	cosmossdk.io/log v1.6.0
