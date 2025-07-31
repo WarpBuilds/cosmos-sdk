@@ -199,7 +199,7 @@ func NewKeeper(logger log.Logger) Keeper {
 
 Modules will provide their core services to the runtime module via extension interfaces built on top of the
 `cosmossdk.io/core/appmodule.AppModule` tag interface. This tag interface requires only two empty methods which
-allow `depinject` to identify implementors as `depinject.OnePerModule` types and as app module implementations:
+allow `depinject` to identify implementers as `depinject.OnePerModule` types and as app module implementations:
 
 ```go
 type AppModule interface {
@@ -226,7 +226,7 @@ type HasServices interface {
 
 ```
 
-Because of the `cosmos.msg.v1.service` protobuf option, required for `Msg` services, the same `ServiceRegitrar` can be
+Because of the `cosmos.msg.v1.service` protobuf option, required for `Msg` services, the same `ServiceRegistrar` can be
 used to register both `Msg` and query services.
 
 #### Genesis
@@ -388,7 +388,7 @@ Additional `AppModule` extension interfaces either inside or outside of core wil
 these concerns.
 
 In the case of gogo proto and amino interfaces, the registration of these generally should happen as early
-as possible during initialization and in [ADR 057: App Wiring](./adr-057-app-wiring-1.md), protobuf type registration  
+as possible during initialization and in [ADR 057: App Wiring](./adr-057-app-wiring.md), protobuf type registration  
 happens before dependency injection (although this could alternatively be done dedicated DI providers).
 
 gRPC gateway registration should probably be handled by the runtime module, but the core API shouldn't depend on gRPC
@@ -463,10 +463,11 @@ module manager and follow the Cosmos SDK's existing [0-based versioning](https:/
 versioning as well as runtime modularity, new officially supported runtime modules will be created under the
 `cosmossdk.io/runtime` prefix. For each supported consensus engine a semantically-versioned go module should be created
 with a runtime implementation for that consensus engine. For example:
-- `cosmossdk.io/runtime/comet`
-- `cosmossdk.io/runtime/comet/v2`
-- `cosmossdk.io/runtime/rollkit`
-- etc.
+
+* `cosmossdk.io/runtime/comet`
+* `cosmossdk.io/runtime/comet/v2`
+* `cosmossdk.io/runtime/rollkit`
+* etc.
 
 These runtime modules should attempt to be semantically versioned even if the underlying consensus engine is not. Also,
 because a runtime module is also a first class Cosmos SDK module, it should have a protobuf module config type.
