@@ -263,8 +263,44 @@ type KVStore interface {
 	ReverseIterator(start, end []byte) Iterator
 }
 
-// Iterator is an alias db's Iterator for convenience.
-type Iterator = dbm.Iterator
+// GIterator is the generic version of dbm's Iterator
+type GIterator[V any] interface {
+	// Domain returns the start (inclusive) and end (exclusive) limits of the iterator.
+	// CONTRACT: start, end readonly []byte
+	Domain() (start, end []byte)
+
+	// Valid returns whether the current iterator is valid. Once invalid, the Iterator remains
+	// invalid forever.
+	Valid() bool
+
+	// Next moves the iterator to the next key in the database, as defined by order of iteration.
+	// If Valid returns false, this method will panic.
+	Next()
+
+	// Key returns the key at the current position. Panics if the iterator is invalid.
+	// CONTRACT: key readonly []byte
+	Key() (key []byte)
+
+	// Value returns the value at the current position. Panics if the iterator is invalid.
+	// CONTRACT: value readonly []byte
+	Value() (value V)
+
+	// Error returns the last error encountered by the iterator, if any.
+	Error() error
+
+	// Close closes the iterator, releasing any allocated resources.
+	Close() error
+}
+
+type (
+	Iterator     = GIterator[[]byte]
+	BasicKVStore = GBasicKVStore[[]byte]
+	KVStore      = GKVStore[[]byte]
+
+	ObjIterator     = GIterator[any]
+	ObjBasicKVStore = GBasicKVStore[any]
+	ObjKVStore      = GKVStore[any]
+)
 
 // CacheKVStore branches a KVStore and provides read cache functionality.
 // After calling .Write() on the CacheKVStore, all previously created
