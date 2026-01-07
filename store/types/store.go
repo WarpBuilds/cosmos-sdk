@@ -426,7 +426,7 @@ func NewKVStoreKey(name string) *KVStoreKey {
 }
 
 // NewKVStoreKeys returns a map of new  pointers to KVStoreKey's.
-// The function will panic if there is a potential conflict in names (see `assertNoPrefix`
+// The function will panic if there is a potential conflict in names (see `assertNoCommonPrefix`
 // function for more details).
 func NewKVStoreKeys(names ...string) map[string]*KVStoreKey {
 	assertNoCommonPrefix(names)
@@ -551,13 +551,27 @@ func NewTransientStoreKeys(names ...string) map[string]*TransientStoreKey {
 
 // NewMemoryStoreKeys constructs a new map matching store key names to their
 // respective MemoryStoreKey references.
-// The function will panic if there is a potential conflict in names (see `assertNoPrefix`
+// The function will panic if there is a potential conflict in names (see `assertNoCommonPrefix`
 // function for more details).
 func NewMemoryStoreKeys(names ...string) map[string]*MemoryStoreKey {
 	assertNoCommonPrefix(names)
 	keys := make(map[string]*MemoryStoreKey)
 	for _, n := range names {
 		keys[n] = NewMemoryStoreKey(n)
+	}
+
+	return keys
+}
+
+// NewObjectStoreKeys constructs a new map matching store key names to their
+// respective ObjectStoreKey references.
+// The function will panic if there is a potential conflict in names (see `assertNoCommonPrefix`
+// function for more details).
+func NewObjectStoreKeys(names ...string) map[string]*ObjectStoreKey {
+	assertNoCommonPrefix(names)
+	keys := make(map[string]*ObjectStoreKey)
+	for _, n := range names {
+		keys[n] = NewObjectStoreKey(n)
 	}
 
 	return keys

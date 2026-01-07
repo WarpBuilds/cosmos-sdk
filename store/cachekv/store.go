@@ -115,8 +115,8 @@ func (store *Store) resetCaches() {
 	store.sortedCache = internal.NewBTree()
 }
 
-// Write implements Cachetypes.KVStore.
-func (store *Store) Write() {
+// Write implements types.CacheKVStore.
+func (store *GStore[V]) Write() {
 	store.mtx.Lock()
 	defer store.mtx.Unlock()
 
