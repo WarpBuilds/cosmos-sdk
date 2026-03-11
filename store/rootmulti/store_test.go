@@ -18,14 +18,13 @@ import (
 	"cosmossdk.io/store/cachemulti"
 	"cosmossdk.io/store/iavl"
 	sdkmaps "cosmossdk.io/store/internal/maps"
-	"cosmossdk.io/store/metrics"
 	pruningtypes "cosmossdk.io/store/pruning/types"
 	"cosmossdk.io/store/types"
 )
 
 func TestStoreType(t *testing.T) {
 	db := dbm.NewMemDB()
-	store := NewStore(db, log.NewNopLogger(), metrics.NewNoOpMetrics())
+	store := NewStore(db, log.NewNopLogger())
 	store.MountStoreWithDB(types.NewKVStoreKey("store1"), types.StoreTypeIAVL, db)
 }
 
@@ -48,7 +47,7 @@ func TestGetCommitKVStore(t *testing.T) {
 
 func TestStoreMount(t *testing.T) {
 	db := dbm.NewMemDB()
-	store := NewStore(db, log.NewNopLogger(), metrics.NewNoOpMetrics())
+	store := NewStore(db, log.NewNopLogger())
 
 	key1 := types.NewKVStoreKey("store1")
 	key2 := types.NewKVStoreKey("store2")
@@ -941,7 +940,7 @@ var (
 )
 
 func newMultiStoreWithMounts(db dbm.DB, pruningOpts pruningtypes.PruningOptions) *Store {
-	store := NewStore(db, log.NewNopLogger(), metrics.NewNoOpMetrics())
+	store := NewStore(db, log.NewNopLogger())
 	store.SetPruning(pruningOpts)
 
 	store.MountStoreWithDB(testStoreKey1, types.StoreTypeIAVL, nil)
@@ -952,7 +951,7 @@ func newMultiStoreWithMounts(db dbm.DB, pruningOpts pruningtypes.PruningOptions)
 }
 
 func newMultiStoreWithModifiedMounts(db dbm.DB, pruningOpts pruningtypes.PruningOptions) (*Store, *types.StoreUpgrades) {
-	store := NewStore(db, log.NewNopLogger(), metrics.NewNoOpMetrics())
+	store := NewStore(db, log.NewNopLogger())
 	store.SetPruning(pruningOpts)
 
 	store.MountStoreWithDB(types.NewKVStoreKey("store1"), types.StoreTypeIAVL, nil)
@@ -1078,7 +1077,7 @@ func (stub *commitKVStoreStub) Commit() types.CommitID {
 
 func prepareStoreMap() (map[types.StoreKey]types.CommitKVStore, error) {
 	var db dbm.DB = dbm.NewMemDB()
-	store := NewStore(db, log.NewNopLogger(), metrics.NewNoOpMetrics())
+	store := NewStore(db, log.NewNopLogger())
 	store.MountStoreWithDB(types.NewKVStoreKey("iavl1"), types.StoreTypeIAVL, nil)
 	store.MountStoreWithDB(types.NewKVStoreKey("iavl2"), types.StoreTypeIAVL, nil)
 	store.MountStoreWithDB(types.NewTransientStoreKey("trans1"), types.StoreTypeTransient, nil)

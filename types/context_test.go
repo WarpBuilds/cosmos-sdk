@@ -12,7 +12,6 @@ import (
 	"go.uber.org/mock/gomock"
 
 	"cosmossdk.io/log/v2"
-	"cosmossdk.io/store/metrics"
 	"cosmossdk.io/store/rootmulti"
 	storetypes "cosmossdk.io/store/types"
 
@@ -243,4 +242,16 @@ func (s *contextTestSuite) TestUnwrapSDKContext() {
 	ctx = context.WithValue(sdkCtx, struct{}{}, "bar") //nolint:staticcheck // this is fine for testing
 	sdkCtx2 = types.UnwrapSDKContext(ctx)
 	s.Require().Equal(sdkCtx, sdkCtx2)
+}
+
+func (s *contextTestSuite) TestMultiStore() {
+	db := dbm.NewMemDB()
+	rms := rootmulti.NewStore(db, log.NewNopLogger())
+	ctx := types.NewContext(rms, cmtproto.Header{}, false, nil)
+
+	objKey := storetypes.NewObjectStoreKey("obj")
+	rms.MountStoreWithDB(objKey, storetypes.StoreTypeObject, nil)
+	s.Require().NoError(rms.LoadLatestVersion())
+	objKVStore := ctx.ObjectStore(objKey)
+	s.Require().Equal(objKVStore.GetStoreType(), storetypes.StoreTypeObject)
 }
