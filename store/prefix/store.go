@@ -3,10 +3,8 @@ package prefix
 import (
 	"bytes"
 	"errors"
-	"io"
 
 	"cosmossdk.io/store/legacy/cachekv"
-	"cosmossdk.io/store/tracekv"
 	"cosmossdk.io/store/types"
 )
 
@@ -50,11 +48,6 @@ func (s Store) GetStoreType() types.StoreType {
 // CacheWrap implements CacheWrap, returning a new CacheWrap with the parent store as the underlying store
 func (s Store) CacheWrap() types.CacheWrap {
 	return cachekv.NewStore(s)
-}
-
-// CacheWrapWithTrace implements the KVStore interface.
-func (s Store) CacheWrapWithTrace(w io.Writer, tc types.TraceContext) types.CacheWrap {
-	return cachekv.NewStore(tracekv.NewStore(s, w, tc))
 }
 
 // Get implements KVStore, calls Get on the parent store with the key prefixed with the prefix

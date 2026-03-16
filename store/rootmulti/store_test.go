@@ -1,7 +1,6 @@
 package rootmulti
 
 import (
-	"bytes"
 	"crypto/sha256"
 	"fmt"
 	"math/rand"
@@ -28,6 +27,23 @@ func TestStoreType(t *testing.T) {
 	store.MountStoreWithDB(types.NewKVStoreKey("store1"), types.StoreTypeIAVL, db)
 }
 
+func TestGetObjKVStore(t *testing.T) {
+	var db dbm.DB = dbm.NewMemDB()
+	ms := newMultiStoreWithMounts(db, pruningtypes.NewPruningOptions(pruningtypes.PruningDefault))
+	err := ms.LoadLatestVersion()
+	require.Nil(t, err)
+
+	key := ms.keysByName["store6"]
+
+	store1 := ms.GetObjKVStore(key)
+	require.NotNil(t, store1)
+	require.IsType(t, &transient.ObjStore{}, store1)
+
+	store2 := ms.getCommitStore(key)
+	require.NotNil(t, store2)
+	require.IsType(t, &transient.ObjStore{}, store2)
+}
+
 func TestGetCommitKVStore(t *testing.T) {
 	var db dbm.DB = dbm.NewMemDB()
 	ms := newMultiStoreWithMounts(db, pruningtypes.NewPruningOptions(pruningtypes.PruningDefault))
@@ -36,11 +52,11 @@ func TestGetCommitKVStore(t *testing.T) {
 
 	key := ms.keysByName["store1"]
 
-	store1 := ms.GetCommitKVStore(key)
+	store1 := ms.getCommitKVStore(key)
 	require.NotNil(t, store1)
 	require.IsType(t, &iavl.Store{}, store1)
 
-	store2 := ms.GetCommitStore(key)
+	store2 := ms.getCommitStore(key)
 	require.NotNil(t, store2)
 	require.IsType(t, &iavl.Store{}, store2)
 }
@@ -811,7 +827,7 @@ func TestSetInitialVersion(t *testing.T) {
 	multi.Commit()
 	require.Equal(t, int64(5), multi.LastCommitID().Version)
 
-	ckvs := multi.GetCommitKVStore(multi.keysByName["store1"])
+	ckvs := multi.getCommitKVStore(multi.keysByName["store1"])
 	iavlStore, ok := ckvs.(*iavl.Store)
 	require.True(t, ok)
 	require.True(t, iavlStore.VersionExists(5))
@@ -839,59 +855,6 @@ func TestCacheWraps(t *testing.T) {
 
 	cacheWrapper := multi.CacheWrap()
 	require.IsType(t, cachemulti.Store{}, cacheWrapper)
-
-	cacheWrappedWithTrace := multi.CacheWrapWithTrace(nil, nil)
-	require.IsType(t, cachemulti.Store{}, cacheWrappedWithTrace)
-}
-
-func TestTraceConcurrency(t *testing.T) {
-	db := dbm.NewMemDB()
-	multi := newMultiStoreWithMounts(db, pruningtypes.NewPruningOptions(pruningtypes.PruningNothing))
-	err := multi.LoadLatestVersion()
-	require.NoError(t, err)
-
-	b := &bytes.Buffer{}
-	key := multi.keysByName["store1"]
-	tc := types.TraceContext(map[string]interface{}{"blockHeight": 64})
-
-	multi.SetTracer(b)
-	multi.SetTracingContext(tc)
-
-	cms := multi.CacheMultiStore()
-	store1 := cms.GetKVStore(key)
-	cw := store1.CacheWrapWithTrace(b, tc)
-	_ = cw
-	require.NotNil(t, store1)
-
-	stop := make(chan struct{})
-	stopW := make(chan struct{})
-
-	go func(stop chan struct{}) {
-		for {
-			select {
-			case <-stop:
-				return
-			default:
-				store1.Set([]byte{1}, []byte{1})
-				cms.Write()
-			}
-		}
-	}(stop)
-
-	go func(stop chan struct{}) {
-		for {
-			select {
-			case <-stop:
-				return
-			default:
-				multi.SetTracingContext(tc)
-			}
-		}
-	}(stopW)
-
-	time.Sleep(3 * time.Second)
-	stop <- struct{}{}
-	stopW <- struct{}{}
 }
 
 func TestCommitOrdered(t *testing.T) {

@@ -2,20 +2,11 @@ package cachemulti
 
 import (
 	"fmt"
-	"io"
-	"maps"
 
-	dbm "github.com/cosmos/cosmos-db"
-
-	"cosmossdk.io/store/cachekv"
-	"cosmossdk.io/store/dbadapter"
+	"cosmossdk.io/store/legacy/cachekv"
 	"cosmossdk.io/store/tracekv"
 	"cosmossdk.io/store/types"
 )
-
-// storeNameCtxKey is the TraceContext metadata key that identifies
-// the store which emitted a given trace.
-const storeNameCtxKey = "store_name"
 
 //----------------------------------------
 // Store
@@ -29,8 +20,7 @@ type Store struct {
 	stores map[types.StoreKey]types.CacheWrap
 	keys   map[string]types.StoreKey
 
-	traceWriter  io.Writer
-	traceContext types.TraceContext
+	parentStore func(types.StoreKey) types.CacheWrapper
 }
 
 var _ types.CacheMultiStore = Store{}
@@ -39,15 +29,10 @@ var _ types.CacheMultiStore = Store{}
 // CacheWrapper objects and a KVStore as the database. Each CacheWrapper store
 // is a branched store.
 func NewFromKVStore(
-	store types.KVStore, stores map[types.StoreKey]types.CacheWrapper,
-	keys map[string]types.StoreKey, traceWriter io.Writer, traceContext types.TraceContext,
+	stores map[types.StoreKey]types.CacheWrapper,
 ) Store {
 	cms := Store{
-		db:           cachekv.NewStore(store),
-		stores:       make(map[types.StoreKey]types.CacheWrap, len(stores)),
-		keys:         keys,
-		traceWriter:  traceWriter,
-		traceContext: traceContext,
+		stores: make(map[types.StoreKey]types.CacheWrap, len(stores)),
 	}
 
 	for key, store := range stores {
@@ -67,45 +52,26 @@ func NewFromKVStore(
 // NewStore creates a new Store object from a mapping of store keys to
 // CacheWrapper objects. Each CacheWrapper store is a branched store.
 func NewStore(
-	db dbm.DB, stores map[types.StoreKey]types.CacheWrapper, keys map[string]types.StoreKey,
-	traceWriter io.Writer, traceContext types.TraceContext,
+	stores map[types.StoreKey]types.CacheWrapper,
 ) Store {
-	return NewFromKVStore(dbadapter.Store{DB: db}, stores, keys, traceWriter, traceContext)
+	return NewFromKVStore(stores)
 }
 
-func newCacheMultiStoreFromCMS(cms Store) Store {
-	stores := make(map[types.StoreKey]types.CacheWrapper)
-	for k, v := range cms.stores {
-		stores[k] = v
+// NewFromParent constructs a cache multistore with a parent store lazily,
+// the parent is usually another cache multistore or the block-stm multiversion store.
+func NewFromParent(
+	parentStore func(types.StoreKey) types.CacheWrapper,
+) Store {
+	return Store{
+		stores:      make(map[types.StoreKey]types.CacheWrap),
+		parentStore: parentStore,
 	}
-
-	return NewFromKVStore(cms.db, stores, nil, cms.traceWriter, cms.traceContext)
 }
 
-// SetTracer sets the tracer for the MultiStore that the underlying
-// stores will utilize to trace operations. A MultiStore is returned.
-func (cms Store) SetTracer(w io.Writer) types.MultiStore {
-	cms.traceWriter = w
-	return cms
-}
-
-// SetTracingContext updates the tracing context for the MultiStore by merging
-// the given context with the existing context by key. Any existing keys will
-// be overwritten. It is implied that the caller should update the context when
-// necessary between tracing operations. It returns a modified MultiStore.
-func (cms Store) SetTracingContext(tc types.TraceContext) types.MultiStore {
-	if cms.traceContext != nil {
-		maps.Copy(cms.traceContext, tc)
-	} else {
-		cms.traceContext = tc
-	}
-
-	return cms
-}
-
-// TracingEnabled returns if tracing is enabled for the MultiStore.
-func (cms Store) TracingEnabled() bool {
-	return cms.traceWriter != nil
+func (cms Store) initStore(key types.StoreKey, store types.CacheWrapper) types.CacheWrap {
+	cache := store.CacheWrap()
+	cms.stores[key] = cache
+	return cache
 }
 
 // LatestVersion returns the branch version of the store
@@ -131,15 +97,10 @@ func (cms Store) CacheWrap() types.CacheWrap {
 	return cms.CacheMultiStore().(types.CacheWrap)
 }
 
-// CacheWrapWithTrace implements the CacheWrapper interface.
-func (cms Store) CacheWrapWithTrace(_ io.Writer, _ types.TraceContext) types.CacheWrap {
-	return cms.CacheWrap()
-}
-
 // CacheMultiStore implements MultiStore, returns a new CacheMultiStore from the
 // underlying CacheMultiStore.
 func (cms Store) CacheMultiStore() types.CacheMultiStore {
-	return newCacheMultiStoreFromCMS(cms)
+	return NewFromParent(cms.getCacheWrapper)
 }
 
 // CacheMultiStoreWithVersion implements the MultiStore interface. It will panic
