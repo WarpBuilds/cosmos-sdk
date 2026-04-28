@@ -5,9 +5,9 @@ on:
     types: [opened, synchronize, reopened, ready_for_review]
 
 permissions:
-  contents: read          # needed to read commits
-  pull-requests: write    # needed to close the PR
-  issues: write           # needed to post a comment
+  contents: read # needed to read commits
+  pull-requests: write # needed to close the PR
+  issues: write # needed to post a comment
 
 jobs:
   check-signed-commits:
@@ -17,7 +17,7 @@ jobs:
 
     steps:
       - name: Verify all PR commits are signed
-        uses: actions/github-script@v7
+        uses: actions/github-script@v9
         with:
           script: |
             const { owner, repo } = context.repo;
@@ -62,4 +62,3 @@ jobs:
             await github.rest.issues.createComment({
               owner, repo, issue_number: prNumber, body: msg
             });
-            
