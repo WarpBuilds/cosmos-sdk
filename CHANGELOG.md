@@ -65,9 +65,11 @@ Ref: https://keepachangelog.com/en/1.0.0/
 * (docs) [#25918](https://github.com/cosmos/cosmos-sdk/issues/25918) Regenerate Swagger API spec to reflect current proto state, including `authority` field on consensus params and removal of stale module-config definitions.
 * (baseapp) [#22368](https://github.com/cosmos/cosmos-sdk/issues/22368) Add `-race`-mode regression test (`TestABCI_Race_GRPC_Query_During_Commit`) covering concurrent `BaseApp.Query` and `FinalizeBlock`/`Commit`. Pins down the state-management mutex work added in #24655 and follow-ups so the data race reported against v0.50.x cannot regress silently.
 * (x/staking, x/slashing) [#26481](https://github.com/cosmos/cosmos-sdk/pull/26481) Resolve evidence against recently rotated consensus keys and migrate slashing signing state to the active consensus key.
+* (x/auth/tx) [#25221](https://github.com/cosmos/cosmos-sdk/issues/25221) Add `ConfigOptions.AminoJSONEncoder` so applications can configure a custom `aminojson.Encoder` (e.g. custom field encodings) for the `SIGN_MODE_LEGACY_AMINO_JSON` handler without replicating the SDK's `HandlerMap` construction.
 
 ### Bug Fixes
 
+* (client) [#26524](https://github.com/cosmos/cosmos-sdk/pull/26524) Fix file handle leak in the `snapshot dump` command where chunk files were deferred-closed inside the loop, keeping every chunk's handle open until the command returned (follow-up to #25811).
 * (x/distribution) [#26406](https://github.com/cosmos/cosmos-sdk/pull/26406) Add fallback paths (delegator/validator owner, then community pool) when withdrawing delegator rewards or validator commission to a blocked address during `Begin/EndBlockers`. user msg initiated paths still return `ErrUnauthorized` when withdrawing to blocked addresses.
 * (x/gov) [#26353](https://github.com/cosmos/cosmos-sdk/pull/26353) Fix leading comma in `proposal_messages` event attribute emitted by `SubmitProposal`.
 * (telemetry) [#26390](https://github.com/cosmos/cosmos-sdk/pull/26390) Fix env var for otel telemetry initialization.
@@ -76,6 +78,7 @@ Ref: https://keepachangelog.com/en/1.0.0/
 * (x/staking) [#26460](https://github.com/cosmos/cosmos-sdk/pull/26460) Coalesce key rotation power updates to not emit duplicates.
 * (x/staking) [#26483](https://github.com/cosmos/cosmos-sdk/pull/26483) Block `MsgCreateValidator` from creating validators with cons addrs locked by key rotations.
 * (blockstm) [#25893](https://github.com/cosmos/cosmos-sdk/pull/25893) Fix CancelAll cancellation by clearing blocker ESTIMATE marks before waking suspended executors.
+* (crypto) [#26529](https://github.com/cosmos/cosmos-sdk/pull/26529) Validate the SEC1 tag byte (`0x02`/`0x03`) when unmarshaling a `secp256k1.PubKey`, rejecting malformed compressed keys that previously passed the length-only check.
 
 ### Deprecated
 
