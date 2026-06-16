@@ -70,6 +70,7 @@ Ref: https://keepachangelog.com/en/1.0.0/
 ### Bug Fixes
 
 * (client) [#26524](https://github.com/cosmos/cosmos-sdk/pull/26524) Fix file handle leak in the `snapshot dump` command where chunk files were deferred-closed inside the loop, keeping every chunk's handle open until the command returned (follow-up to #25811).
+* (x/distribution) [#26518](https://github.com/cosmos/cosmos-sdk/pull/26518) Return an error from internal historical rewards reads when the record is absent, preventing recovered reference-count panics during BlockSTM speculative execution.
 * (x/distribution) [#26406](https://github.com/cosmos/cosmos-sdk/pull/26406) Add fallback paths (delegator/validator owner, then community pool) when withdrawing delegator rewards or validator commission to a blocked address during `Begin/EndBlockers`. user msg initiated paths still return `ErrUnauthorized` when withdrawing to blocked addresses.
 * (x/gov) [#26353](https://github.com/cosmos/cosmos-sdk/pull/26353) Fix leading comma in `proposal_messages` event attribute emitted by `SubmitProposal`.
 * (telemetry) [#26390](https://github.com/cosmos/cosmos-sdk/pull/26390) Fix env var for otel telemetry initialization.
@@ -79,6 +80,7 @@ Ref: https://keepachangelog.com/en/1.0.0/
 * (x/staking) [#26483](https://github.com/cosmos/cosmos-sdk/pull/26483) Block `MsgCreateValidator` from creating validators with cons addrs locked by key rotations.
 * (blockstm) [#25893](https://github.com/cosmos/cosmos-sdk/pull/25893) Fix CancelAll cancellation by clearing blocker ESTIMATE marks before waking suspended executors.
 * (crypto) [#26529](https://github.com/cosmos/cosmos-sdk/pull/26529) Validate the SEC1 tag byte (`0x02`/`0x03`) when unmarshaling a `secp256k1.PubKey`, rejecting malformed compressed keys that previously passed the length-only check.
+* (x/auth/tx) [#26527](https://github.com/cosmos/cosmos-sdk/pull/26527) Fix nil pointer panic in `GetSigningTxData` when a `SignerInfo` has a nil `PublicKey`.
 
 ### Deprecated
 
