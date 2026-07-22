@@ -56,6 +56,11 @@ jobs:
           tar -C dist -czf "dist/$bin.tar.gz" "$bin"
           sha256sum "dist/$bin.tar.gz" > "dist/$bin.tar.gz.sha256"
 
+      - name: Attest build provenance
+        uses: actions/attest-build-provenance@v4
+        with:
+          subject-path: dist/*.tar.gz
+
       - uses: actions/upload-artifact@v4
         with:
           name: simd-${{ matrix.goos }}-${{ matrix.goarch }}
